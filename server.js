@@ -1,43 +1,43 @@
 const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
-const port = process.env.PORT || 4001;
+const redis = require('redis');
+
+const ingestionPort = process.env.IPORT || 4001;
+const broadcastPort = process.env.BPORT || 4002;
+
 const index = require("./routes/index");
-var redis = require('redis');
-var client = redis.createClient({
-    host:"redis-15812.c61.us-east-1-3.ec2.cloud.redislabs.com",
-    port:15812,
-    no_ready_check: true,
-    auth_pass: 123 
+
+// Redis client
+const client = redis.createClient({
+  host: "redis-15812.c61.us-east-1-3.ec2.cloud.redislabs.com",
+  port: 15812,
+  no_ready_check: true,
+  auth_pass: 123
 });
-client.on('connect', function() {
-    console.log('Redis client connected');
+
+// Connection to redis
+client.on('connect', err => {
+  console.log('Connected to redis');
 });
 
 client.on('error', function (err) {
-    console.log('Something went wrong cannot connect to redis server : ' + err);
+  console.log('Error connecting to redis : ' + err);
 });
-const app = express();
-app.use(index);
-const server = http.createServer(app);
 
-let count=10;
-const io = socketIo(server);
-//creates socket connection
-io.on("connection", socket => {
-  console.log("New client connected"), setInterval(
-    () => getApiAndEmit(socket),
-    10000
-  );
+const app = express();
+const ingestionServer = http.createServer(app);
+
+// Socket connection for ingestion
+const receiver = socketIo(ingestionServer);
+
+receiver.on("connection", socket => {
+  console.log('Connected to client');
+
+  // TODO: Send current status of match
+  socket.emit('initialize', 'teamPlayers')
+
   socket.on("disconnect", () => console.log("Client disconnected"));
 });
-const getApiAndEmit = async socket => {
-  try {
-    count++;
-    socket.emit("FromAPI",count);
-    socket.emit("suddu" , 10);
-  } catch (error) {
-    console.error(`Error in api: ${error.code}`);
-  }
-};
-server.listen(port, () => console.log(`Listening on port ${port}`));
+
+ingestionServer.listen(ingestionPort, () => console.log(`Listening on port ${ingestionPort}`));
