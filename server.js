@@ -8,6 +8,8 @@ const broadcastPort = process.env.BPORT || 4002;
 
 const index = require("./routes/index");
 
+const scoreCardDisplay = {};
+
 // Redis client
 const client = redis.createClient({
   host: "redis-15812.c61.us-east-1-3.ec2.cloud.redislabs.com",
@@ -26,13 +28,15 @@ client.on('error', function (err) {
 });
 
 const app = express();
+
+// Creating ingestion server
 const ingestionServer = http.createServer(app);
 
 // Socket connection for ingestion
 const receiver = socketIo(ingestionServer);
 
 receiver.on("connection", socket => {
-  console.log('Connected to client');
+  console.log('Connected to ingestion client');
 
   // TODO: Send current status of match
   socket.emit('initialize', 'teamPlayers')
@@ -41,3 +45,20 @@ receiver.on("connection", socket => {
 });
 
 ingestionServer.listen(ingestionPort, () => console.log(`Listening on port ${ingestionPort}`));
+
+// Creating broadcast server
+const broadcastServer = http.createServer(app);
+
+// Socket connection for broadcast
+const broadcast = socketIo(broadcastServer);
+
+broadcast.on("connection", socket => {
+  console.log('Connected to broadcast client');
+
+  // TODO: Send current scorecard of match
+  socket.emit('initialize', scoreCard)
+
+  socket.on("disconnect", () => console.log("Client disconnected"));
+});
+
+broadcastServer.listen(broadcastPort, () => console.log(`Listening on port ${broadcastPort}`));
