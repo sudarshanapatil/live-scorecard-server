@@ -10,7 +10,7 @@ router.post("/apis/createteam", (req, reply) => {
   let counter = 1;
   async.each(teamPlayers, (i, cb) => {
     //set players data in redis
-    global.db.redis.set(`team::${teamId}::Player${counter++}`, "jjhj", (err, res) => {
+    global.db.redis.hmset(`team::${teamId}::Player${counter++}`, i, (err, res) => {
       if (err) {
         console.log("Error in redis : ", err)
         cb()
@@ -46,5 +46,19 @@ router.post("/apis/createteam", (req, reply) => {
 //   })
   
 // })
+
+//TODO
+router.get("/apis/test", (req, reply) => {
+  let teamId=req.params.teamId;
+  global.db.redis.hmget("1::Player3", (err, res) => {
+    if (err)
+      console.log("Error : ", err)
+    else {
+      console.log({ response: res })
+      reply.send({ response: res}).status(200);
+    }
+  })
+  
+})
 
 module.exports = router;
