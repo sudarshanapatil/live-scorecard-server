@@ -2,21 +2,32 @@ const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
 const redis = require('redis');
-
+const index = require("./routes/index");
+const app = express();
+const bodyParser = require('body-parser');
+const conf = require("./conf/dev.conf")
+app.use(bodyParser.json()); // support json encoded bodies
+app.use(bodyParser.urlencoded({
+  extended: true
+})); // support encoded bodies
+//routes to define APIs
+app.use('/', index);
+global.db = {};
 const ingestionPort = process.env.IPORT || 4001;
 const broadcastPort = process.env.BPORT || 4002;
-
-const index = require("./routes/index");
+const serverPort = process.env.SPORT || 4000;
 
 const scoreCardDisplay = {};
 
 // Redis client
-const client = redis.createClient({
-  host: "redis-15812.c61.us-east-1-3.ec2.cloud.redislabs.com",
-  port: 15812,
+const redisClient = redis.createClient({
+  host: conf.host,
+  port: conf.port,
   no_ready_check: true,
-  auth_pass: 123
+  auth_pass: conf.auth_pass
 });
+
+global.db.redis = redisClient
 
 // Connection to redis
 client.on('connect', err => {
@@ -27,7 +38,6 @@ client.on('error', function (err) {
   console.log('Error connecting to redis : ' + err);
 });
 
-const app = express();
 
 // Creating ingestion server
 const ingestionServer = http.createServer(app);
@@ -39,12 +49,31 @@ receiver.on("connection", socket => {
   console.log('Connected to ingestion client');
 
   // TODO: Send current status of match
-  socket.emit('initialize', 1);
+  const initialize = () => {
+    redisClient.get('match:status', (err, res) => {
+      if(err) {
+        console.log('Error : ', err);
+      } else {
+        let value;
+        if (res) {
+          value = res.value;
+        } else {
+          value = 0;
+        }
+        socket.emit('initialize', value);
+      }
+    })
+  }
 
   socket.on('nextScreen', status => {
     console.log('Status : ', status);
+    redisClient.set('match:status', status);
   });
 
+  socket.on("getTeamData", dataFromClient => {
+    console.log("ingestion clinet", dataFromClient)
+
+  })
   socket.on("disconnect", () => console.log("Client disconnected"));
 });
 
@@ -60,9 +89,14 @@ broadcast.on("connection", socket => {
   console.log('Connected to broadcast client');
 
   // TODO: Send current scorecard of match
-  socket.emit('initialize', scoreCard)
+  socket.emit('initialize', scoreCardDisplay)
 
   socket.on("disconnect", () => console.log("Client disconnected"));
 });
 
 broadcastServer.listen(broadcastPort, () => console.log(`Listening on port ${broadcastPort}`));
+
+//creating server for APIS
+const apiServer = http.createServer(app);
+
+apiServer.listen(serverPort, () => console.log(`Listening on port ${serverPort}`));
