@@ -39,7 +39,11 @@ receiver.on("connection", socket => {
   console.log('Connected to ingestion client');
 
   // TODO: Send current status of match
-  socket.emit('initialize', 'teamPlayers')
+  socket.emit('initialize', 1);
+
+  socket.on('nextScreen', status => {
+    console.log('Status : ', status);
+  });
 
   socket.on("disconnect", () => console.log("Client disconnected"));
 });
