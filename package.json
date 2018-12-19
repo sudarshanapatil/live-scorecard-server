@@ -17,8 +17,10 @@
   },
   "homepage": "https://github.com/sudarshanapatil/live-scorecard-server#readme",
   "dependencies": {
+    "async": "^2.6.1",
     "express": "^4.16.4",
     "redis": "^2.8.0",
+    "shortid": "^2.2.14",
     "socket.io": "^2.2.0"
   }
 }

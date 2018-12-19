@@ -5,18 +5,20 @@ const async = require("async")
 
 //creates team and players keys
 router.post("/apis/createteam", (req, reply) => {
-  let { teamId,teamName, teamPlayers } = req.body;
-  
+  let { teamId, teamName, teamPlayers } = req.body;
+
   let counter = 1;
   async.each(teamPlayers, (i, cb) => {
     //set players data in redis
-    global.db.redis.hmset(`team::${teamId}::Player${counter++}`, i, (err, res) => {
+    let key = `team${teamId}::Player${counter++}`
+    console.log("key: ", key)
+    global.db.redis.hmset(key, i, (err, res) => {
       if (err) {
         console.log("Error in redis : ", err)
         cb()
       }
       else {
-        console.log(`${teamId}::Player${counter++}`)
+        console.log(`team${teamId}::Player${counter++} set successfully `)
         cb()
       }
     })
@@ -34,31 +36,33 @@ router.post("/apis/createteam", (req, reply) => {
 });
 
 //TODO
-// router.get("/apis/getPlayers", (req, reply) => {
-//   let teamId=req.params.teamId;
-//   global.db.redis.get(`${teamId}::name`, teamName, (err, res) => {
-//     if (err)
-//       console.log("Error : ", err)
-//     else {
-//       console.log({ response: "created team successsfully" })
-//       reply.send({ response: "created team successsfully" }).status(200);
-//     }
-//   })
-  
-// })
+router.get("/apis/getplayers/:teamId", (req, reply) => {
+  let teamId=req.params.teamId;
+  global.db.redis.keys(`team${teamId}::*`, (err, res) => {
+    if (err)
+      console.log("Error : ", err)
+    else {
+      global.db.redis.mget(res, (err, mres) => {
+      console.log({ response: mres })
+      reply.send({ response: mres }).status(200);
+      })
+    }
+  })
+
+})
 
 //TODO
 router.get("/apis/test", (req, reply) => {
-  let teamId=req.params.teamId;
-  global.db.redis.hmget("1::Player3", (err, res) => {
+  let teamId = req.params.teamId;
+  global.db.redis.hgetall("team1::Player1", (err, res) => {
     if (err)
       console.log("Error : ", err)
     else {
       console.log({ response: res })
-      reply.send({ response: res}).status(200);
+      reply.send({ response: res }).status(200);
     }
   })
-  
+
 })
 
 module.exports = router;

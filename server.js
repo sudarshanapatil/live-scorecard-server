@@ -30,11 +30,11 @@ const redisClient = redis.createClient({
 global.db.redis = redisClient
 
 // Connection to redis
-client.on('connect', err => {
+redisClient.on('connect', err => {
   console.log('Connected to redis');
 });
 
-client.on('error', function (err) {
+redisClient.on('error', function (err) {
   console.log('Error connecting to redis : ' + err);
 });
 
@@ -64,6 +64,8 @@ receiver.on("connection", socket => {
       }
     })
   }
+
+  initialize();
 
   socket.on('nextScreen', status => {
     console.log('Status : ', status);
