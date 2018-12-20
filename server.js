@@ -15,7 +15,7 @@ app.use('/', index);
 global.db = {};
 const ingestionPort = process.env.IPORT || 4001;
 const broadcastPort = process.env.BPORT || 4002;
-const serverPort = process.env.SPORT || 4000;
+const serverPort = process.env.PORT || 4000;
 
 const scoreCardDisplay = {};
 
