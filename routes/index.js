@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const shortid = require('shortid');
 const async = require("async")
 
 //creates team and players keys
