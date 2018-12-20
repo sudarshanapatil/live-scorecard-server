@@ -4,6 +4,8 @@ const socketIo = require("socket.io");
 const redis = require('redis');
 const index = require("./routes/index");
 const app = express();
+const Bluebird = require('bluebird')
+
 const bodyParser = require('body-parser');
 const conf = require("./conf/dev.conf")
 app.use(bodyParser.json()); // support json encoded bodies
@@ -26,6 +28,7 @@ const redisClient = redis.createClient({
   no_ready_check: true,
   auth_pass: conf.auth_pass
 });
+Bluebird.promisifyAll(redis.RedisClient.prototype);
 
 global.db.redis = redisClient
 
@@ -67,6 +70,7 @@ receiver.on("connection", socket => {
 
   initialize();
 
+  socket.on('matchStart',data => {})
   socket.on('nextScreen', status => {
     console.log('Status : ', status);
     redisClient.set('match:status', status);
