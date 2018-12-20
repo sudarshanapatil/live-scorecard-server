@@ -61,7 +61,7 @@ receiver.on("connection", socket => {
         if (res) {
           value = res.value;
         } else {
-          value = 0;
+          value = 1;
         }
         socket.emit('initialize', value);
       }
