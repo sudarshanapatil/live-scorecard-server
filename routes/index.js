@@ -16,7 +16,7 @@ router.post("/apis/createteam", (req, reply) => {
         cb()
       }
       else {
-        console.log(`team${teamId}::Player${counter++} set successfully `)
+        console.log(`team${teamId}::player${counter++} set successfully `)
         cb()
       }
     })
@@ -57,7 +57,6 @@ router.get("/apis/getplayers/:teamId", (req, reply) => {
 //set toss result and which team is batting
 router.post("/apis/toss", (req, reply) => {
   let { teamId, battingTeam, decision } = req.body;
-
   global.db.redis.hmsetAsync("team::toss", {
     teamId,
     battingTeam,
@@ -74,7 +73,7 @@ router.post("/apis/toss", (req, reply) => {
 //TODO
 router.get("/apis/test", async (req, reply) => {
   let teamId = req.params.teamId;
-  await global.db.redis.hgetallAsync("team::toss")
+  await global.db.redis.hgetallAsync("team6::player7")
     .then(function (res) {
       console.log({ response: res })
       reply.send({ response: res }).status(200);

@@ -5,13 +5,13 @@ const redis = require('redis');
 const index = require("./routes/index");
 const app = express();
 const Bluebird = require('bluebird')
-
 const bodyParser = require('body-parser');
 const conf = require("./conf/dev.conf")
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({
   extended: true
 })); // support encoded bodies
+
 //routes to define APIs
 app.use('/', index);
 global.db = {};
@@ -54,7 +54,7 @@ receiver.on("connection", socket => {
   // TODO: Send current status of match
   const initialize = () => {
     redisClient.get('match:status', (err, res) => {
-      if(err) {
+      if (err) {
         console.log('Error : ', err);
       } else {
         let value;
@@ -69,16 +69,79 @@ receiver.on("connection", socket => {
   }
 
   initialize();
+  //after toss when match starts
+  socket.on('matchStart', data => {
+    console.log("match started", data)
+    let { strikerId, nonStrikerId } = data;
+    redisClient.setAsync('current::striker', strikerId)
+      .then(function (res) { console.log(res) })
+      .catch(function (err) { console.log(err) })
+    redisClient.setAsync('current::nonStriker', nonStrikerId)
+      .then(function (res) { console.log(res) })
+      .catch(function (err) { console.log(err) })
+    redisClient.setAsync('current::totalballs', 0)
+      .then(function (res) { console.log(res) })
+      .catch(function (err) { console.log(err) })
+  })
 
-  socket.on('matchStart',data => {})
+  //At start of each over
+  socket.on("overStart", data => {
+    //TODO maiden over check
+    let { bowlerId } = data;
+    redisClient.setAsync('current::bowler', bowlerId)
+    //TODO:To check update on key
+    redisClient.hsetAsync('current::over', 0, 0, 0, 0, 0, 0)
+  })
+
+  socket.on("wicket", data => {
+    let { wicketBy, wicketType, playerId, teamId } = data;
+    redisClient.incrbyAsync(`current::wicket`, 1)
+    if (wicketType == "catch")
+      redisClient.hmsetAsync(`team${teamId}::player${playerId}`, { wicketBy, wicketType })
+  })
+
+  socket.on("extra", data => {
+    let { score, teamId } = data;
+    redisClient.incrbyAsync(`team${teamId}::extra`, score)
+  })
+
+  socket.on("eachBallUpdate", data => {
+    let { runScored, teamId, playerId } = data;
+    console.log(data, "eachballupdate")
+    let ballFaced = 2;
+    let fours = sixes = 0;
+    if (parseInt(runScored) == 4)
+      fours = 1
+    else if (parseInt(runScored) == 6)
+      sixes = 1
+    redisClient.incrbyAsync(`current::totalBalls`, 28);
+    redisClient.incrbyAsync(`current::score`, runScored);
+    //TODO
+    // redisClient.hmsetAsync(`team${teamId}::player${playerId}`, { runScored, fours, sixes });
+  })
+
   socket.on('nextScreen', status => {
     console.log('Status : ', status);
-    redisClient.set('match:status', status);
+    redisClient.setAsync('match:status', status);
+  });
+
+  socket.on('endMatch', data => {
+    let { teamId, totalScore, totalWicket } = data;
+    console.log('Status : ', status);
+    redisClient.setAsync(`team${teamId}::score`, totalScore)
+    redisClient.setAsync(`team${teamId}::wicket`, totalWicket)
+  });
+
+  socket.on('currentOver', status => {
+    redisClient.getAsync('current::totalBalls')
+      .then((res) => {
+        let over = `${parseInt(res / 6)}.${res % 6}`;
+        console.log(over, "over")
+      })
   });
 
   socket.on("getTeamData", dataFromClient => {
     console.log("ingestion clinet", dataFromClient)
-
   })
   socket.on("disconnect", () => console.log("Client disconnected"));
 });
@@ -90,13 +153,10 @@ const broadcastServer = http.createServer(app);
 
 // Socket connection for broadcast
 const broadcast = socketIo(broadcastServer);
-
 broadcast.on("connection", socket => {
   console.log('Connected to broadcast client');
-
   // TODO: Send current scorecard of match
-  socket.emit('initialize', scoreCardDisplay)
-
+  socket.on("initialize", scoreCardDisplay)
   socket.on("disconnect", () => console.log("Client disconnected"));
 });
 
