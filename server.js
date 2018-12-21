@@ -2,6 +2,8 @@ const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
 const redis = require('redis');
+const cors = require('cors')
+
 const index = require("./routes/index");
 const app = express();
 const Bluebird = require('bluebird')
@@ -12,6 +14,9 @@ app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({
   extended: true
 })); // support encoded bodies
+
+app.use(cors())
+
 //routes to define APIs
 app.use('/', index);
 global.db = {};
