@@ -57,7 +57,7 @@ receiver.on("connection", socket => {
 
   // TODO: Send current status of match
   const initialize = () => {
-    redisClient.get('match:status', (err, res) => {
+    redisClient.getAsync('match:status', (err, res) => {
       if (err) {
         console.log('Error : ', err);
       } else {
