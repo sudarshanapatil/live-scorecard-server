@@ -15,7 +15,7 @@ app.use(bodyParser.urlencoded({
   extended: true
 })); // support encoded bodies
 
-app.use(cors())
+app.use(cors());
 
 //routes to define APIs
 app.use('/', index);
