@@ -53,13 +53,10 @@ const receiver = socketIo(ingestionServer);
 
 receiver.on("connection", socket => {
   console.log('Connected to ingestion client');
-
-  // TODO: Send current status of match
+ // TODO: Send current status of match
   const initialize = () => {
-    redisClient.get('match:status', (err, res) => {
-      if (err) {
-        console.log('Error : ', err);
-      } else {
+    redisClient.getAsync('match:status')
+      .then(() => {
         let value;
         if (res) {
           value = res.value;
@@ -67,8 +64,8 @@ receiver.on("connection", socket => {
           value = 1;
         }
         socket.emit('initialize', value);
-      }
-    })
+      })
+      .catch((err) => console.log('Error : ', err))
   }
 
   initialize();
@@ -76,20 +73,14 @@ receiver.on("connection", socket => {
   socket.on('matchStart', data => {
     console.log("match started", data)
     let { strikerId, nonStrikerId } = data;
-    let funcArr=[redisClient.setAsync('current::striker', strikerId),redisClient.setAsync('current::nonStriker', nonStrikerId),redisClient.setAsync('current::totalballs', 0)]
+    let funcArr = [redisClient.setAsync('current::striker', strikerId), redisClient.setAsync('current::nonStriker', nonStrikerId), redisClient.setAsync('current::totalballs', 0)]
     Promise.all(funcArr)
-    .then((res)=>{
-      console.log(res)
-    })
-    .catch((err) => {
-      console.log(err)
-    })
-    // redisClient.setAsync('current::striker', strikerId)
-    //   .catch((err) => { console.log(err) })
-    // redisClient.setAsync('current::nonStriker', nonStrikerId)
-    //   .catch((err) => { console.log(err) })
-    // redisClient.setAsync('current::totalballs', 0)
-    //   .catch((err) => { console.log(err) })
+      .then((res) => {
+        console.log(res)
+      })
+      .catch((err) => {
+        console.log(err)
+      })
   })
 
   //At start of each over
