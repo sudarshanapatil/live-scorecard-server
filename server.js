@@ -53,7 +53,7 @@ const receiver = socketIo(ingestionServer);
 
 receiver.on("connection", socket => {
   console.log('Connected to ingestion client');
- // TODO: Send current status of match
+  // TODO: Send current status of match
   const initialize = () => {
     redisClient.getAsync('match:status')
       .then(() => {
@@ -108,47 +108,36 @@ receiver.on("connection", socket => {
     redisClient.incrbyAsync(`team${teamId}::extra`, score)
       .catch((err) => { console.log("err: ", err) })
   })
-
-  socket.on("four", data => {
-    let { runScored, teamId, playerId } = data;
-    console.log("in four : ", `team${teamId}::player${playerId}`)
-    redisClient.hgetallAsync(`team${teamId}::player${playerId}`)
-      .then(function (res) {
-        console.log("res: ", res)
-        res.fours++;
-        redisClient.hmsetAsync(`team${teamId}::player${playerId}`, res)
-          .catch((err) => { console.log("err: ", err) })
-      })
-      .catch((err) => { console.log("err: ", err) })
-  })
-  socket.on("six", data => {
-    let { runScored, teamId, playerId } = data;
-    console.log("in six : ", `team${teamId}::player${playerId}`)
-    redisClient.hgetallAsync(`team${teamId}::player${playerId}`)
-      .then(function (res) {
-        console.log("res: ", res)
-        res.sixes++;
-        redisClient.hmsetAsync(`team${teamId}::player${playerId}`, res)
-          .catch((err) => { console.log("err: ", err) })
-      })
-      .catch((err) => { console.log("err: ", err) })
-  })
   socket.on("eachBallUpdate", data => {
     let { runScored, teamId, playerId } = data;
     console.log(data, "eachballupdate")
 
     let ballFaced = 2;
     let fours = sixes = 0;
-    if (parseInt(runScored) == 4)
-      fours = 1
-    else if (parseInt(runScored) == 6)
-      sixes = 1
+    if (parseInt(runScored) == 4) {
+      redisClient.hgetallAsync(`team${teamId}::player${playerId}`)
+        .then(function (res) {
+          console.log("res: ", res)
+          res.fours++;
+          redisClient.hmsetAsync(`team${teamId}::player${playerId}`, res)
+            .catch((err) => { console.log("err: ", err) })
+        })
+        .catch((err) => { console.log("err: ", err) })
+    }
+    else if (parseInt(runScored) == 6) {
+      redisClient.hgetallAsync(`team${teamId}::player${playerId}`)
+        .then(function (res) {
+          console.log("res: ", res)
+          res.sixes++;
+          redisClient.hmsetAsync(`team${teamId}::player${playerId}`, res)
+            .catch((err) => { console.log("err: ", err) })
+        })
+        .catch((err) => { console.log("err: ", err) })
+    }
     redisClient.incrbyAsync(`current::totalBalls`, 1)
       .catch((err) => { console.log("err: ", err) })
     redisClient.incrbyAsync(`current::score`, runScored)
       .catch((err) => { console.log("err: ", err) })
-    //TODO
-    // redisClient.hmsetAsync(`team${teamId}::player${playerId}`, { runScored, fours, sixes });
   })
 
   socket.on('nextScreen', status => {
