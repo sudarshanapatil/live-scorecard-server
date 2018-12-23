@@ -3,7 +3,6 @@ const http = require("http");
 const socketIo = require("socket.io");
 const redis = require('redis');
 const cors = require('cors')
-
 const index = require("./routes/index");
 const app = express();
 const Bluebird = require('bluebird')
@@ -57,7 +56,7 @@ receiver.on("connection", socket => {
 
   // TODO: Send current status of match
   const initialize = () => {
-    redisClient.getAsync('match:status', (err, res) => {
+    redisClient.get('match:status', (err, res) => {
       if (err) {
         console.log('Error : ', err);
       } else {
@@ -77,24 +76,32 @@ receiver.on("connection", socket => {
   socket.on('matchStart', data => {
     console.log("match started", data)
     let { strikerId, nonStrikerId } = data;
-    redisClient.setAsync('current::striker', strikerId)
-      .then(function (res) { console.log(res) })
-      .catch(function (err) { console.log(err) })
-    redisClient.setAsync('current::nonStriker', nonStrikerId)
-      .then(function (res) { console.log(res) })
-      .catch(function (err) { console.log(err) })
-    redisClient.setAsync('current::totalballs', 0)
-      .then(function (res) { console.log(res) })
-      .catch(function (err) { console.log(err) })
+    let funcArr=[redisClient.setAsync('current::striker', strikerId),redisClient.setAsync('current::nonStriker', nonStrikerId),redisClient.setAsync('current::totalballs', 0)]
+    Promise.all(funcArr)
+    .then((res)=>{
+      console.log(res)
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+    // redisClient.setAsync('current::striker', strikerId)
+    //   .catch((err) => { console.log(err) })
+    // redisClient.setAsync('current::nonStriker', nonStrikerId)
+    //   .catch((err) => { console.log(err) })
+    // redisClient.setAsync('current::totalballs', 0)
+    //   .catch((err) => { console.log(err) })
   })
 
   //At start of each over
   socket.on("overStart", data => {
+    console.log("ovr start")
     //TODO maiden over check
     let { bowlerId } = data;
     redisClient.setAsync('current::bowler', bowlerId)
     //TODO:To check update on key
-    redisClient.hsetAsync('current::over', 0, 0, 0, 0, 0, 0)
+    redisClient.setAsync('current::over', JSON.stringify([0, 0, 0, 0, 0, 0]))
+      .then((res) => { console.log("res: ", res) })
+      .catch((err) => { console.log("err: ", err) })
   })
 
   socket.on("wicket", data => {
@@ -102,24 +109,53 @@ receiver.on("connection", socket => {
     redisClient.incrbyAsync(`current::wicket`, 1)
     if (wicketType == "catch")
       redisClient.hmsetAsync(`team${teamId}::player${playerId}`, { wicketBy, wicketType })
+        .catch((err) => { console.log("err: ", err) })
   })
 
   socket.on("extra", data => {
     let { score, teamId } = data;
     redisClient.incrbyAsync(`team${teamId}::extra`, score)
+      .catch((err) => { console.log("err: ", err) })
   })
 
+  socket.on("four", data => {
+    let { runScored, teamId, playerId } = data;
+    console.log("in four : ", `team${teamId}::player${playerId}`)
+    redisClient.hgetallAsync(`team${teamId}::player${playerId}`)
+      .then(function (res) {
+        console.log("res: ", res)
+        res.fours++;
+        redisClient.hmsetAsync(`team${teamId}::player${playerId}`, res)
+          .catch((err) => { console.log("err: ", err) })
+      })
+      .catch((err) => { console.log("err: ", err) })
+  })
+  socket.on("six", data => {
+    let { runScored, teamId, playerId } = data;
+    console.log("in six : ", `team${teamId}::player${playerId}`)
+    redisClient.hgetallAsync(`team${teamId}::player${playerId}`)
+      .then(function (res) {
+        console.log("res: ", res)
+        res.sixes++;
+        redisClient.hmsetAsync(`team${teamId}::player${playerId}`, res)
+          .catch((err) => { console.log("err: ", err) })
+      })
+      .catch((err) => { console.log("err: ", err) })
+  })
   socket.on("eachBallUpdate", data => {
     let { runScored, teamId, playerId } = data;
     console.log(data, "eachballupdate")
+
     let ballFaced = 2;
     let fours = sixes = 0;
     if (parseInt(runScored) == 4)
       fours = 1
     else if (parseInt(runScored) == 6)
       sixes = 1
-    redisClient.incrbyAsync(`current::totalBalls`, 28);
-    redisClient.incrbyAsync(`current::score`, runScored);
+    redisClient.incrbyAsync(`current::totalBalls`, 1)
+      .catch((err) => { console.log("err: ", err) })
+    redisClient.incrbyAsync(`current::score`, runScored)
+      .catch((err) => { console.log("err: ", err) })
     //TODO
     // redisClient.hmsetAsync(`team${teamId}::player${playerId}`, { runScored, fours, sixes });
   })
@@ -133,7 +169,9 @@ receiver.on("connection", socket => {
     let { teamId, totalScore, totalWicket } = data;
     console.log('Status : ', status);
     redisClient.setAsync(`team${teamId}::score`, totalScore)
+      .catch((err) => { console.log("err: ", err) })
     redisClient.setAsync(`team${teamId}::wicket`, totalWicket)
+      .catch((err) => { console.log("err: ", err) })
   });
 
   socket.on('currentOver', status => {
@@ -142,6 +180,7 @@ receiver.on("connection", socket => {
         let over = `${parseInt(res / 6)}.${res % 6}`;
         console.log(over, "over")
       })
+      .catch((err) => { console.log("err: ", err) })
   });
 
   socket.on("getTeamData", dataFromClient => {

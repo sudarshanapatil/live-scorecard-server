@@ -8,28 +8,28 @@ router.post("/apis/createteam", (req, reply) => {
   let counter = 1;
   async.each(teamPlayers, (i, cb) => {
     //set players data in redis
-    let key = `team${teamId}::Player${counter++}`
-    console.log("key: ", key)
-    global.db.redis.hmsetAsync(key, i, (err, res) => {
-      if (err) {
-        console.log("Error in redis : ", err)
-        cb()
-      }
-      else {
+    let key = `team${teamId}::player${counter++}`;
+    i.fours = i.sixes = 0;
+    console.log("key: ", key, i)
+    global.db.redis.hmsetAsync(key, i)
+      .then((res) => {
         console.log(`team${teamId}::player${counter++} set successfully `)
         cb()
-      }
-    })
+      })
+      .catch((err) => {
+        console.log("Error in redis : ", err)
+        cb()
+      })
   }, (done) => {
     //set teamName
-    global.db.redis.setAsync(`${teamId}::name`, teamName, (err, res) => {
-      if (err)
+    global.db.redis.setAsync(`${teamId}::name`, teamName)
+      .then((res) => {
         console.log("Error : ", err)
-      else {
+      })
+      .catch((err) => {
         console.log({ response: "created team successsfully" })
         reply.send({ response: "created team successsfully" }).status(200);
-      }
-    })
+      })
   })
 });
 
@@ -42,11 +42,15 @@ router.get("/apis/getplayers/:teamId", (req, reply) => {
     else {
       let resArr = []
       async.each(res, (i, cb) => {
-        global.db.redis.hgetall(i, (err, mres) => {
-          resArr.push(mres)
-          console.log({ response: mres })
-          cb()
-        })
+        global.db.redis.hgetallAsync(i)
+          .then((mres) => {
+            resArr.push(mres)
+            console.log({ response: mres })
+            cb()
+          })
+          .catch((err) => {
+            console.log(err)
+          })
       }, () => {
         reply.send({ response: resArr }).status(200);
       })
@@ -73,10 +77,10 @@ router.post("/apis/toss", (req, reply) => {
 //TODO
 router.get("/apis/test", async (req, reply) => {
   let teamId = req.params.teamId;
-  await global.db.redis.hgetallAsync("team6::player7")
+  await global.db.redis.getAsync("current::striker")
     .then(function (res) {
-      console.log({ response: res })
-      reply.send({ response: res }).status(200);
+      console.log({ response: JSON.parse(res) })
+      reply.send({ response: JSON.parse(res) }).status(200);
     }).catch(function (err) {
       console.log("Error : ", err)
     })
