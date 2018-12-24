@@ -9,8 +9,8 @@ const inningStart = (socket, redisClient) => {
         redisClient.setAsync('current::nonStriker', nonStrikerId),
         redisClient.setAsync(`team${teamId}::totalballs`, 0),
         redisClient.setAsync(`current::inning`, inningId),
-        redisClient.saddAsync(`team${teamId}::playedBatsman`, playerId)] //stores list of batsman played till now
-        
+        redisClient.saddAsync([`team${teamId}::playedBatsman`, strikerId, nonStrikerId])] //stores list of batsman played till now
+
         Promise.all(funcArr)
             .then((res) => {
                 console.log(res)
