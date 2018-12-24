@@ -40,12 +40,10 @@ const redisClient = redis.createClient({
 });
 Bluebird.promisifyAll(redis.RedisClient.prototype);
 global.db.redis = redisClient
-
 // Connection to redis
 redisClient.on('connect', err => {
   console.log('Connected to redis');
 });
-
 redisClient.on('error', function (err) {
   console.log('Error connecting to redis : ' + err);
 });
@@ -92,11 +90,13 @@ ingestionServer.listen(ingestionPort, () => console.log(`Listening on port ${ing
 const broadcastServer = http.createServer(app);
 // Socket connection for broadcast
 const broadcast = socketIo(broadcastServer);
-broadcast.on("connection", socket => {
+broadcast.on("connection", userSocket => {
   console.log('Connected to broadcast client');
   // TODO: Send current scorecard of match
-  socket.on("initialize", scoreCardDisplay)
-  socket.on("disconnect", () => console.log("Client disconnected"));
+  global.userSocket=userSocket;
+ // userSocket.on("initialize", scoreCardDisplay)
+  userSocket.emit("initialize",)
+  userSocket.on("disconnect", () => console.log("Client disconnected"));
 });
 
 broadcastServer.listen(broadcastPort, () => console.log(`Listening on port ${broadcastPort}`));

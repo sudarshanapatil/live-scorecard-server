@@ -11,6 +11,7 @@ router.post("/apis/createteam", (req, reply) => {
     let key = `team${teamId}::player${counter++}`;
     i.fours = i.sixes = 0;
     console.log("key: ", key, i)
+
     global.db.redis.hmsetAsync(key, i)
       .then((res) => {
         console.log(`team${teamId}::player${counter++} set successfully `)
@@ -22,7 +23,7 @@ router.post("/apis/createteam", (req, reply) => {
       })
   }, (done) => {
     //set teamName
-    global.db.redis.setAsync(`${teamId}::name`, teamName)
+    global.db.redis.setAsync(`team${teamId}::name`, teamName)
       .then((res) => {
         console.log("Error : ", err)
       })
@@ -78,13 +79,20 @@ router.post("/apis/toss", (req, reply) => {
 //TODO
 router.get("/apis/test", async (req, reply) => {
   let teamId = req.params.teamId;
-  global.db.redis.lrangeAsync(["current::over",0,-1])
-    .then(function (res) {
-      console.log({ response: JSON.parse(res) })
-      reply.send({ response: JSON.parse(res) }).status(200);
-    }).catch(function (err) {
-      console.log("Error : ", err)
-    })
+  global.db.redis.hgetallAsync( "team1::player5")
+  .then(function (res) {
+    console.log({ response: res })
+    reply.send({ response: res }).status(200);
+  }).catch(function (err) {
+    console.log("Error : ", err)
+  })
+  // global.db.redis.lrangeAsync(["current::over",0,-1])
+  //   .then(function (res) {
+  //     console.log({ response: JSON.parse(res) })
+  //     reply.send({ response: JSON.parse(res) }).status(200);
+  //   }).catch(function (err) {
+  //     console.log("Error : ", err)
+  //   })
 
 })
 

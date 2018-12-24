@@ -1,4 +1,5 @@
 const extra = (socket, redisClient) => {
+    //Extra ball like wide,noBall
     socket.on("extra", data => {
         let { score, teamId, type } = data;
         redisClient.incrbyAsync(`team${teamId}::extra`, score + 1)

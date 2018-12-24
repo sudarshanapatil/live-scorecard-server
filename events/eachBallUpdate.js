@@ -1,5 +1,8 @@
 const eachBallUpdate = (socket, redisClient) => {
-    //TODO:update overList for bowler
+    //Updates batsman runScored and ballsFaced checks for 4s and 6s,
+    //swaps striker and nonstriker if needed
+    //bowlers runsGiven,overs
+    //updates runs in overArray of bowler
 
     socket.on("eachBallUpdate", data => {
         console.log(data, "eachballupdate")

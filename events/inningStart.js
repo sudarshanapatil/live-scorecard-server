@@ -8,17 +8,9 @@ const inningStart = (socket, redisClient) => {
         let funcArr = [redisClient.setAsync('current::striker', strikerId),
         redisClient.setAsync('current::nonStriker', nonStrikerId),
         redisClient.setAsync(`team${teamId}::totalballs`, 0),
-        redisClient.setAsync(`current::inning`, inningId)]
-        if (inningId == 1) {
-            redisClient.hgetallAsync("team::toss")
-                .then((res) => {
-                    
-                    heading = { title: `${res.teamId} won the toss and elected to do ${res.decision}.` }
-                })
-           
-        }
-        else
-            heading = { totalScore: 500, totalWicket: 7 }
+        redisClient.setAsync(`current::inning`, inningId),
+        redisClient.saddAsync(`team${teamId}::playedBatsman`, playerId)] //stores list of batsman played till now
+        
         Promise.all(funcArr)
             .then((res) => {
                 console.log(res)

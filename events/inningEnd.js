@@ -1,7 +1,7 @@
 const inningEnd = (socket, redisClient) => {
     socket.on("inningEnd", data => {
+        //At end of every inning update the total score of team and make all current keys null
         console.log("inning end")
-        //current sab change to 0
         let { teamId, totalScore, totalWicket } = data;
         console.log('Status : ', status);
         redisClient.setAsync(`team${teamId}::score`, totalScore)
