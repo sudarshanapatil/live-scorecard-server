@@ -46,10 +46,11 @@ router.get("/apis/getplayers/:teamId", (req, reply) => {
           .then((mres) => {
             resArr.push(mres)
             console.log({ response: mres })
-            cb()
+            cb();
           })
           .catch((err) => {
             console.log(err)
+            cb();
           })
       }, () => {
         reply.send({ response: resArr }).status(200);
@@ -77,7 +78,7 @@ router.post("/apis/toss", (req, reply) => {
 //TODO
 router.get("/apis/test", async (req, reply) => {
   let teamId = req.params.teamId;
-  await global.db.redis.getAsync("current::striker")
+  global.db.redis.lrangeAsync(["current::over",0,-1])
     .then(function (res) {
       console.log({ response: JSON.parse(res) })
       reply.send({ response: JSON.parse(res) }).status(200);
