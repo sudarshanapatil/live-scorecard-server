@@ -3,8 +3,12 @@ const overStart = (socket, redisClient) => {
     //bowlerDEails aksahy ko chahiye or strik pe kaun hai or total runs
     socket.on("overStart", data => {
         console.log("over start")
+        
         let { bowlerId, strikerId, nonStrikerId, overId, teamId } = data;
-        Promise.all([redisClient.hgetallAsync(`team${teamId}::player${bowlerId}`),
+        let oppositeTeamId = 1
+        if (teamId == 1)
+            oppositeTeamId = 2
+        Promise.all([redisClient.hgetallAsync(`team${oppositeTeamId}::player${bowlerId}`),
         redisClient.getAsync(`current::striker`),
         redisClient.getAsync(`team${teamId}::score`),
         ])
@@ -27,17 +31,18 @@ const overStart = (socket, redisClient) => {
                 let isMaiden = res.every((i) => {
                     return (i == 0);
                 })
+
                 //Increament maidenCount for bowler
                 if (isMaiden) {
                     redisClient.getAsync(`current::bowler`)
                         .then((oldBowlerId) => {
-                            return redisClient.hgetallAsync(`team${teamId}::player${oldBowlerId}`)
+                            return redisClient.hgetallAsync(`team${oppositeTeamId}::player${oldBowlerId}`)
                         })
                         .then(function (res) {
                             console.log("res: ", res)
                             res.maidenOvers++;
                             const funcArr = [
-                                redisClient.hmsetAsync(`team${teamId}::player${oldBowlerId}`, res),
+                                redisClient.hmsetAsync(`team${oppositeTeamId}::player${oldBowlerId}`, res),
                                 redisClient.setAsync('current::bowler', bowlerId)
                             ]
                             return Promise.all(funcArr)

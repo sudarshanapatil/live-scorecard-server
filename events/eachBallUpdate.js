@@ -54,12 +54,15 @@ const eachBallUpdate = (socket, redisClient) => {
         }
 
         //update runsGiven and totalOvers of bowler
-        redisClient.hgetallAsync(`team${teamId}::player${bowlerId}`)
+        let oppositeTeamId = 1
+        if (teamId == 1)
+            oppositeTeamId = 2
+        redisClient.hgetallAsync(`team${oppositeTeamId}::player${bowlerId}`)
             .then(function (res) {
                 console.log("res: ", res)
                 res.runsGiven += runScored;
                 res.overs++;
-                redisClient.hmsetAsync(`team${teamId}::player${bowlerId}`, res)
+                redisClient.hmsetAsync(`team${oppositeTeamId}::player${bowlerId}`, res)
                     .catch((err) => { console.log("err: ", err) })
             })
             .catch((err) => { console.log("err: ", err) })

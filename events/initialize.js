@@ -1,7 +1,7 @@
 let async = require("async")
-const initialize = (socket, redisClient, key) => {
+const initialize = (socket, redisClient) => {
   //Initial event
-  console.log(`Initializing..${key}`)
+  console.log(`Initializing..`)
   let scoreCardDisplay = {
     team1: {},
     team2: {}
@@ -9,25 +9,11 @@ const initialize = (socket, redisClient, key) => {
   let heading;
   redisClient.getAsync("current::inning")
     .then((resInning) => {
-      scoreCardDisplay.inningId = resInning;
+      scoreCardDisplay.inningId = parseInt(resInning);
       redisClient.hgetallAsync("team::toss")
         .then((resToss) => {
           let { battingTeam, teamId, decision } = resToss;
-
-          //if its a First inning get info who own d toss
-          if (resInning == 1) {
-            scoreCardDisplay.heading = { title: `${teamId} won the toss and elected to do ${decision}.` }
-          }
-          //if its a second inning
-          else {
-            let teamFunc = [redisClient.getAsync(`team${teamId}::score`), redisClient.getAsync(`team${teamId}::wicket`)]
-            Promise.all(teamFunc)
-              .then((res) => {
-                scoreCardDisplay.heading = { totalScore: res[0], totalWicket: res[1] }
-              })
-              .catch((err) => { console.log(err) })
-          }
-
+          scoreCardDisplay.toss = { teamId: teamId, decision: decision,battingTeam:battingTeam }
           let funArr = [redisClient.getAsync(`team1::name`),
           redisClient.getAsync(`team2::name`),
           redisClient.getAsync(`current::striker`),
@@ -93,28 +79,28 @@ const initialize = (socket, redisClient, key) => {
                   if (resPlayer[0]) {
                     scoreCardDisplay.striker = {
                       name: resPlayer[0].name,
-                      runs: resPlayer[0].runScored,
-                      balls: resPlayer[0].ballsFaced,
-                      fours: resPlayer[0].fours,
-                      sixes: resPlayer[0].sixes
+                      runs: parseInt(resPlayer[0].runScored),
+                      balls: parseInt(resPlayer[0].ballsFaced),
+                      fours: parseInt(resPlayer[0].fours),
+                      sixes: parseInt(resPlayer[0].sixes)
                     }
                   }
                   if (resPlayer[1]) {
                     scoreCardDisplay.nonStriker = {
                       name: resPlayer[1].name,
-                      runs: resPlayer[1].runScored,
-                      balls: resPlayer[1].ballsFaced,
-                      fours: resPlayer[1].fours,
-                      sixes: resPlayer[1].sixes
+                      runs: parseInt(resPlayer[1].runScored),
+                      balls: parseInt(resPlayer[1].ballsFaced),
+                      fours: parseInt(resPlayer[1].fours),
+                      sixes: parseInt(resPlayer[1].sixes)
                     }
                   }
                   if (resPlayer[2]) {
                     scoreCardDisplay.bowler = {
                       name: resPlayer[2].name,
-                      runsGiven: resPlayer[2].runsGiven,
-                      ballsBowled: resPlayer[2].overs,
-                      maiden: resPlayer[2].maiden,
-                      wickets: resPlayer[2].wickets,
+                      runsGiven: parseInt(resPlayer[2].runsGiven),
+                      ballsBowled: parseInt(resPlayer[2].overs),
+                      maiden: parseInt(resPlayer[2].maiden),
+                      wickets: parseInt(resPlayer[2].wickets),
                     }
                   }
                   scoreCardDisplay.overArray = resPlayer[3]
@@ -125,10 +111,10 @@ const initialize = (socket, redisClient, key) => {
                       .then(function (res) {
                         playerArr.push({
                           name: res.name,
-                          runs: res.runScored,
-                          balls: res.ballsFaced,
-                          fours: res.fours,
-                          sixes: res.sixes
+                          runs:parseInt(res.runScored),
+                          balls: parseInt(res.ballsFaced),
+                          fours: parseInt(res.fours),
+                          sixes: parseInt(res.sixes)
                         })
                         cb()
 
@@ -150,12 +136,12 @@ const initialize = (socket, redisClient, key) => {
                         scoreCardDisplay.batsmanBoard = playerArr;
                         scoreCardDisplay.matchStatus = value;
                         //  console.log("scorecard...", scoreCardDisplay)
-                        if (key == "admin") {//to Admin
-                          socket.emit('initialize', scoreCardDisplay);
-                        }
-                        else if (key == "user") {//to User
-                          global.userSocket.emit("initialize", scoreCardDisplay);
-                        }
+                        //if (key == "admin") {//to Admin
+                        socket.emit('initialize', scoreCardDisplay);
+                        //}
+                        // else if (key == "user") {//to User
+                        socket.emit("initialize", scoreCardDisplay);
+                        //}
 
                       })
                       .catch((err) => console.log('Error : ', err))

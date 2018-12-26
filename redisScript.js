@@ -19,17 +19,31 @@ redisClient.on('connect', err => {
 
 // redisClient.setAsync("match::status",1)
 // .then(res => {console.log(res)})
-redisClient.keysAsync("*")
-    .then(res => {
-        console.log(res)
-        res.map(i=>{
-            // redisClient.delAsync(i)
-            // .then(res=>console.log(res))
-            // .catch(err => console.log(err))
-            console.log(i,"===")
+const getKey = (key) => {
+    redisClient.keysAsync("team1::player*")
+        .then(res => {
+            console.log(res)
         })
-    })
-    .catch(err => console.log(err))
+        .catch(err => console.log(err))
+}
+
+const deleteKeys = () => {
+    redisClient.keysAsync("team1::player*")
+        .then(res => {
+            console.log(res)
+            res.map(i => {
+                console.log(i)
+                redisClient.del(i)
+                    .then(res => console.log(res))
+                    .catch(err => console.log(err))
+
+            })
+        })
+        .catch(err => console.log(err))
+}
+
+//deleteKeys()
+
 redisClient.on('error', function (err) {
     console.log('Error connecting to redis : ' + err);
 });

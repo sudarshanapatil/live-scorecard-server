@@ -64,7 +64,7 @@ const receiver = socketIo(ingestionServer);
 receiver.on("connection", socket => {
   console.log('Connected to ingestion client');
   // TODO: Send current status of match
-  eventsI(socket, redisClient,"admin");
+  eventsI(socket, redisClient);
   //after toss when inning starts
   eventsIS(socket, redisClient);
   //At start of each over
@@ -94,7 +94,7 @@ broadcast.on("connection", userSocket => {
 
   // TODO: Send current scorecard of match
   global.userSocket = userSocket;
-  eventsI(userSocket, redisClient,"user");
+  eventsI(userSocket, redisClient);
   userSocket.emit("initialize")
   userSocket.on("disconnect", () => console.log("Client disconnected"));
 });
