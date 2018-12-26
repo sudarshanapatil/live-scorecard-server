@@ -1,11 +1,11 @@
 let async = require("async")
 const initialize = (socket, redisClient) => {
   //Initial event
-  console.log("initializing")
+  console.log("initializing..")
   redisClient.getAsync('match:status')
     .then((res) => {
       let value;
-      if (res) {
+      if (res) { 
         value = res.value;
       } else {
         value = 1;
@@ -82,7 +82,6 @@ const initialize = (socket, redisClient) => {
                 }
               }
 
-
               let strikerId = res[2];
               let nonStrikerId = res[3];
               let bowlerId = res[4];
@@ -120,10 +119,10 @@ const initialize = (socket, redisClient) => {
                   console.log("kkjj............", resPlayer[4])
                   let batsmanBoard = {}
                   let playerArr = []
-                  async.each(resPlayer[4], (i, cb) => {
+                  async.each(resPlayer[4], (i, cb) => {  //TODO:remove async and use Promiss.all
                     redisClient.hgetallAsync(`team${battingTeam}::player${i}`)
                       .then(function (res) {
-                       
+
                         playerArr.push({
                           name: res.name,
                           runs: res.runScored,
@@ -141,7 +140,7 @@ const initialize = (socket, redisClient) => {
 
                   }, () => {
                     scoreCardDisplay.batsmanBoard = playerArr;
-                    console.log("scorecard",scoreCardDisplay)
+                    console.log("scorecard...", scoreCardDisplay)
                     global.userSocket.emit("initialize", scoreCardDisplay)
                   })
 
