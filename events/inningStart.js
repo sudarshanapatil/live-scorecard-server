@@ -3,6 +3,8 @@ const inningStart = (socket, redisClient) => {
     //after toss when match starts
     socket.on('inningStart', data => {
         console.log("match started", data)
+        //send data to UserBoard
+        global.userSocket.emit(`inningStart`, data)
         let { strikerId, nonStrikerId, teamId, inningId } = data;
         let heading = {};
         let funcArr = [redisClient.setAsync('current::striker', strikerId),

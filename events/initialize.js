@@ -1,10 +1,7 @@
 let async = require("async")
-const initialize = (socket, redisClient) => {
+const initialize = (socket, redisClient, key) => {
   //Initial event
-  console.log("initializing..")
-
-
-  //data to be sent to userBoard
+  console.log(`Initializing..${key}`)
   let scoreCardDisplay = {
     team1: {},
     team2: {}
@@ -15,9 +12,8 @@ const initialize = (socket, redisClient) => {
       scoreCardDisplay.inningId = resInning;
       redisClient.hgetallAsync("team::toss")
         .then((resToss) => {
-          console.log(resToss, "toss:")
           let { battingTeam, teamId, decision } = resToss;
-          console.log(teamId, "teamID")
+
           //if its a First inning get info who own d toss
           if (resInning == 1) {
             scoreCardDisplay.heading = { title: `${teamId} won the toss and elected to do ${decision}.` }
@@ -90,7 +86,7 @@ const initialize = (socket, redisClient) => {
               redisClient.lrangeAsync("current::over1", 0, -1),
               redisClient.smembersAsync(`team${teamId}::playedBatsman`)
               ]
-              console.log(`team${battingTeam}::player${strikerId}`)
+
               Promise.all(playerFunc)
                 .then((resPlayer) => {
 
@@ -122,8 +118,6 @@ const initialize = (socket, redisClient) => {
                     }
                   }
                   scoreCardDisplay.overArray = resPlayer[3]
-
-                  console.log("kkjj............", resPlayer[4])
                   let batsmanBoard = {}
                   let playerArr = []
                   async.each(resPlayer[4], (i, cb) => {  //TODO:remove async and use Promiss.all
@@ -154,12 +148,15 @@ const initialize = (socket, redisClient) => {
                           value = 1;
                         }
                         scoreCardDisplay.batsmanBoard = playerArr;
-                        scoreCardDisplay.matchStatus =
-                          console.log("scorecard...", scoreCardDisplay)
-                        //to Admin
-                        socket.emit('initialize', scoreCardDisplay);
-                        //to User
-                        global.userSocket.emit("initialize", scoreCardDisplay)
+                        scoreCardDisplay.matchStatus = value;
+                        //  console.log("scorecard...", scoreCardDisplay)
+                        if (key == "admin") {//to Admin
+                          socket.emit('initialize', scoreCardDisplay);
+                        }
+                        else if (key == "user") {//to User
+                          global.userSocket.emit("initialize", scoreCardDisplay);
+                        }
+
                       })
                       .catch((err) => console.log('Error : ', err))
 

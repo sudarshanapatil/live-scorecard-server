@@ -6,7 +6,7 @@ const wicket = (socket, redisClient) => {
         global.userSocket.emit("wicket", data)
 
         //set new batsman
-        redisClient.setAsync(`current::${role}`, newPlayer)
+        redisClient.setAsync(`current::striker`, strikerId)
             .catch((err) => { console.log("err: ", err) })
 
         //update total wickets by bowler

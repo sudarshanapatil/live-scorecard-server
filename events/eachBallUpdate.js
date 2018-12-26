@@ -6,6 +6,8 @@ const eachBallUpdate = (socket, redisClient) => {
 
     socket.on("eachBallUpdate", data => {
         console.log(data, "eachballupdate")
+        //send data to UserBoard
+        global.userSocket.emit(`eachBallUpdate`, data)
         //playerId is who played the last ball
         //strikerId is now who is on strike
         let { runScored, teamId, playerId, strikerId, bowlerId } = data;

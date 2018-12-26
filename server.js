@@ -29,7 +29,6 @@ const ingestionPort = process.env.IPORT || 4001;
 const broadcastPort = process.env.BPORT || 4002;
 const serverPort = process.env.PORT || 4000;
 
-const scoreCardDisplay = {};
 
 // Redis client
 const redisClient = redis.createClient({
@@ -65,7 +64,7 @@ const receiver = socketIo(ingestionServer);
 receiver.on("connection", socket => {
   console.log('Connected to ingestion client');
   // TODO: Send current status of match
-  eventsI(socket, redisClient);
+  eventsI(socket, redisClient,"admin");
   //after toss when inning starts
   eventsIS(socket, redisClient);
   //At start of each over
@@ -92,10 +91,11 @@ const broadcastServer = http.createServer(app);
 const broadcast = socketIo(broadcastServer);
 broadcast.on("connection", userSocket => {
   console.log('Connected to broadcast client');
+
   // TODO: Send current scorecard of match
-  global.userSocket=userSocket;
- // userSocket.on("initialize", scoreCardDisplay)
-  userSocket.emit("initialize",)
+  global.userSocket = userSocket;
+  eventsI(userSocket, redisClient,"user");
+  userSocket.emit("initialize")
   userSocket.on("disconnect", () => console.log("Client disconnected"));
 });
 
