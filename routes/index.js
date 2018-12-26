@@ -10,11 +10,10 @@ router.post("/apis/createteam", (req, reply) => {
     //set players data in redis
     let key = `team${teamId}::player${counter++}`;
     i.fours = i.sixes = 0;
-    console.log("key: ", key, i)
-
+    
     global.db.redis.hmsetAsync(key, i)
       .then((res) => {
-        console.log(`team${teamId}::player${counter++} set successfully `)
+        console.log(`${key} set successfully `)
         cb()
       })
       .catch((err) => {
