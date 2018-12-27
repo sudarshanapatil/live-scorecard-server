@@ -4,13 +4,14 @@ const async = require("async")
 
 //creates team and players keys
 router.post("/apis/createteam", (req, reply) => {
+  //set teamscore to 0
   let { teamId, teamName, teamPlayers } = req.body;
   let counter = 1;
   async.each(teamPlayers, (i, cb) => {
     //set players data in redis
     let key = `team${teamId}::player${counter++}`;
     i.fours = i.sixes = 0;
-    
+
     global.db.redis.hmsetAsync(key, i)
       .then((res) => {
         console.log(`${key} set successfully `)
@@ -78,13 +79,13 @@ router.post("/apis/toss", (req, reply) => {
 //TODO
 router.get("/apis/test", async (req, reply) => {
   let teamId = req.params.teamId;
-  global.db.redis.hgetallAsync( "team1::player5")
-  .then(function (res) {
-    console.log({ response: res })
-    reply.send({ response: res }).status(200);
-  }).catch(function (err) {
-    console.log("Error : ", err)
-  })
+  global.db.redis.hgetallAsync("team1::player5")
+    .then(function (res) {
+      console.log({ response: res })
+      reply.send({ response: res }).status(200);
+    }).catch(function (err) {
+      console.log("Error : ", err)
+    })
   // global.db.redis.lrangeAsync(["current::over",0,-1])
   //   .then(function (res) {
   //     console.log({ response: JSON.parse(res) })
