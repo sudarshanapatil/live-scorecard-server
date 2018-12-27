@@ -10,7 +10,7 @@ const eachBallUpdate = (socket, redisClient) => {
         global.userSocket.emit(`eachBallUpdate`, data)
         //playerId is who played the last ball
         //strikerId is now who is on strike
-        let { runScored, teamId, playerId, strikerId, bowlerId } = data;
+        let { runScored, teamId, playerId, strikerId, bowlerId ,nonStrikerId} = data;
 
         //increase runs of player and balls faced
         redisClient.hgetallAsync(`team${teamId}::player${playerId}`)
@@ -27,7 +27,7 @@ const eachBallUpdate = (socket, redisClient) => {
         if (strikerId) {
             redisClient.setAsync(`current::striker`, strikerId)
                 .catch((err) => { console.log("err: ", err) })
-            redisClient.setAsync(`current::nonStriker`, playerId)
+            redisClient.setAsync(`current::nonStriker`, nonStrikerId)
                 .catch((err) => { console.log("err: ", err) })
         }
 
@@ -61,7 +61,7 @@ const eachBallUpdate = (socket, redisClient) => {
             .then(function (res) {
                 console.log("res: ", res)
                 res.runsGiven += runScored;
-                res.overs++;
+                res.bowled++;
                 redisClient.hmsetAsync(`team${oppositeTeamId}::player${bowlerId}`, res)
                     .catch((err) => { console.log("err: ", err) })
             })
