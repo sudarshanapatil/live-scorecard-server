@@ -13,7 +13,7 @@ const initialize = (socket, redisClient) => {
       redisClient.hgetallAsync("team::toss")
         .then((resToss) => {
           let { battingTeam, teamId, decision } = resToss;
-          scoreCardDisplay.toss = { teamId: teamId, decision: decision,battingTeam:battingTeam }
+          scoreCardDisplay.toss = { teamId: teamId, decision: decision, battingTeam: battingTeam }
           let funArr = [redisClient.getAsync(`team1::name`),
           redisClient.getAsync(`team2::name`),
           redisClient.getAsync(`current::striker`),
@@ -111,7 +111,7 @@ const initialize = (socket, redisClient) => {
                       .then(function (res) {
                         playerArr.push({
                           name: res.name,
-                          runs:parseInt(res.runScored),
+                          runs: parseInt(res.runScored),
                           balls: parseInt(res.ballsFaced),
                           fours: parseInt(res.fours),
                           sixes: parseInt(res.sixes)
@@ -127,19 +127,18 @@ const initialize = (socket, redisClient) => {
                   }, () => {
                     redisClient.getAsync('match::status')
                       .then((res) => {
-                        let value;
                         if (res) {
-                          value = res.value;
+                          scoreCardDisplay.matchStatus = parseInt(res);
                         } else {
-                          value = 1;
+                          scoreCardDisplay.matchStatus = 1;
                         }
                         scoreCardDisplay.batsmanBoard = playerArr;
-                        scoreCardDisplay.matchStatus = value;
-                        //  console.log("scorecard...", scoreCardDisplay)
+                        console.log("scorecard...", scoreCardDisplay)
                         //if (key == "admin") {//to Admin
                         socket.emit('initialize', scoreCardDisplay);
                         //}
                         // else if (key == "user") {//to User
+                        //console.log(socket,"socket value")
                         socket.emit("initialize", scoreCardDisplay);
                         //}
 
