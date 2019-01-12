@@ -78,6 +78,7 @@ const initialize = (socket, redisClient) => {
 
                   if (resPlayer[0]) {
                     scoreCardDisplay.striker = {
+                      id:parseInt(strikerId),
                       name: resPlayer[0].name,
                       runs: parseInt(resPlayer[0].runScored),
                       balls: parseInt(resPlayer[0].ballsFaced),
@@ -87,6 +88,7 @@ const initialize = (socket, redisClient) => {
                   }
                   if (resPlayer[1]) {
                     scoreCardDisplay.nonStriker = {
+                      id:parseInt(nonStrikerId),
                       name: resPlayer[1].name,
                       runs: parseInt(resPlayer[1].runScored),
                       balls: parseInt(resPlayer[1].ballsFaced),

@@ -17,7 +17,8 @@ redisClient.on('connect', err => {
     console.log('Connected to redis');
 });
 
-// redisClient.setAsync("match::status",1)
+ redisClient.setAsync("match::status",1)
+ .then(res=>console.log(res))
 // .then(res => {console.log(res)})
 const getKey = (key) => {
     redisClient.keysAsync("team1::player*")
