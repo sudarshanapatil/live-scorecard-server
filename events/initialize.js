@@ -23,6 +23,10 @@ const initialize = (socket, redisClient) => {
           redisClient.getAsync(`team1::wicket`),
           redisClient.getAsync(`team2::score`),
           redisClient.getAsync(`team2::wicket`),
+          redisClient.getAsync('match::status'),
+          getPlayers(1, redisClient),
+          getPlayers(2, redisClient),
+          redisClient.lrangeAsync("current::over1", 0, -1),
           ]
           Promise.all(funArr)
             .then((res) => {
@@ -38,6 +42,13 @@ const initialize = (socket, redisClient) => {
                 runs: res[7],
                 wickets: res[8]
               }
+              scoreCardDisplay.team1.players = res[11];
+              scoreCardDisplay.team2.players = res[12];
+              scoreCardDisplay.overArray = res[13]
+              scoreCardDisplay.matchStatus = 1;
+              console.log(res[10],"status======")
+              if (res[9])
+                scoreCardDisplay.matchStatus = parseInt(res[9]);
               if (teamId == 1) {
                 scoreCardDisplay.team1.wonToss = true
                 scoreCardDisplay.team2.wonToss = false
@@ -69,17 +80,11 @@ const initialize = (socket, redisClient) => {
               let playerFunc = [redisClient.hgetallAsync(`team${battingTeam}::player${strikerId}`),
               redisClient.hgetallAsync(`team${battingTeam}::player${nonStrikerId}`),
               redisClient.hgetallAsync(`team${battingTeam}::player${bowlerId}`),
-              redisClient.lrangeAsync("current::over1", 0, -1),
               redisClient.smembersAsync(`team${teamId}::playedBatsman`),
-              getPlayers(1, redisClient),
-              getPlayers(2, redisClient)
               ]
 
               Promise.all(playerFunc)
                 .then((resPlayer) => {
-                  scoreCardDisplay.team1.players = resPlayer[6];
-                  scoreCardDisplay.team2.players = resPlayer[7];
-                  console.log(resPlayer[6], "team1 players......")
                   if (resPlayer[0]) {
                     scoreCardDisplay.striker = {
                       id: parseInt(strikerId),
@@ -109,51 +114,25 @@ const initialize = (socket, redisClient) => {
                       wickets: parseInt(resPlayer[2].wickets),
                     }
                   }
-
-                  scoreCardDisplay.overArray = resPlayer[3]
                   let batsmanBoard = {}
                   let playerArr = []
-                  async.each(resPlayer[4], (i, cb) => {  //TODO:remove async and use Promiss.all
-                    redisClient.hgetallAsync(`team${battingTeam}::player${i}`)
-                      .then(function (res) {
+                  Promise.all(resPlayer[3].map(i => redisClient.hgetallAsync(`team${battingTeam}::player${i}`)))
+                    .then((res) => {
+                      res.map(key => {
                         playerArr.push({
-                          name: res.name,
-                          runs: parseInt(res.runScored),
-                          balls: parseInt(res.ballsFaced),
-                          fours: parseInt(res.fours),
-                          sixes: parseInt(res.sixes)
+                          name: key.name,
+                          runs: parseInt(key.runScored),
+                          balls: parseInt(key.ballsFaced),
+                          fours: parseInt(key.fours),
+                          sixes: parseInt(key.sixes)
                         })
-                        cb()
-
                       })
-                      .catch(err => {
-                        console.log(err)
-                        cb()
-                      })
-
-                  }, () => {
-                    redisClient.getAsync('match::status')
-                      .then((res) => {
-                        if (res) {
-                          scoreCardDisplay.matchStatus = parseInt(res);
-                        } else {
-                          scoreCardDisplay.matchStatus = 1;
-                        }
-                        scoreCardDisplay.batsmanBoard = playerArr;
-                        console.log("scorecard...", scoreCardDisplay)
-                        //if (key == "admin") {//to Admin
-                        socket.emit('initialize', scoreCardDisplay);
-                        //}
-                        // else if (key == "user") {//to User
-                        //console.log(socket,"socket value")
-                        socket.emit("initialize", scoreCardDisplay);
-                        //}
-
-                      })
-                      .catch((err) => console.log('Error : ', err))
-
-                  })
-
+                      scoreCardDisplay.batsmanBoard = playerArr;
+                      console.log("scorecard...", scoreCardDisplay)
+                      socket.emit('initialize', scoreCardDisplay);
+                      socket.emit("initialize", scoreCardDisplay);
+                    })
+                    .catch(err => { console.log(err) })
                 })
                 .catch((err) => { console.log(err) })
             })
@@ -161,29 +140,22 @@ const initialize = (socket, redisClient) => {
         })
         .catch((err) => { console.log(err) })
     })
-
-
 }
 
-
-
 const getPlayers = (teamId, redisClient) => new Promise((resolve, reject) => {
-  console.log("in players")
   redisClient.keysAsync(`team${teamId}::player*`)
     .catch(err => { console.log("Error : ", err) })
     .then(res => {
       return Promise.all(res.map(i => redisClient.hgetallAsync(i)))
         .then((mres) => {
-            resolve (mres);
-            console.log(mres)
+          resolve(mres);
+         
         })
         .catch((err) => {
           console.log(err)
-          reject (err)
+          reject(err)
         })
 
     })
 })
-
-
 module.exports = initialize;
