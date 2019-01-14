@@ -70,15 +70,19 @@ const initialize = (socket, redisClient) => {
               redisClient.hgetallAsync(`team${battingTeam}::player${nonStrikerId}`),
               redisClient.hgetallAsync(`team${battingTeam}::player${bowlerId}`),
               redisClient.lrangeAsync("current::over1", 0, -1),
-              redisClient.smembersAsync(`team${teamId}::playedBatsman`)
+              redisClient.smembersAsync(`team${teamId}::playedBatsman`),
+              getPlayers(1, redisClient),
+              getPlayers(2, redisClient)
               ]
 
               Promise.all(playerFunc)
                 .then((resPlayer) => {
-
+                  scoreCardDisplay.team1.players = resPlayer[6];
+                  scoreCardDisplay.team2.players = resPlayer[7];
+                  console.log(resPlayer[6], "team1 players......")
                   if (resPlayer[0]) {
                     scoreCardDisplay.striker = {
-                      id:parseInt(strikerId),
+                      id: parseInt(strikerId),
                       name: resPlayer[0].name,
                       runs: parseInt(resPlayer[0].runScored),
                       balls: parseInt(resPlayer[0].ballsFaced),
@@ -88,7 +92,7 @@ const initialize = (socket, redisClient) => {
                   }
                   if (resPlayer[1]) {
                     scoreCardDisplay.nonStriker = {
-                      id:parseInt(nonStrikerId),
+                      id: parseInt(nonStrikerId),
                       name: resPlayer[1].name,
                       runs: parseInt(resPlayer[1].runScored),
                       balls: parseInt(resPlayer[1].ballsFaced),
@@ -105,6 +109,7 @@ const initialize = (socket, redisClient) => {
                       wickets: parseInt(resPlayer[2].wickets),
                     }
                   }
+
                   scoreCardDisplay.overArray = resPlayer[3]
                   let batsmanBoard = {}
                   let playerArr = []
@@ -159,5 +164,26 @@ const initialize = (socket, redisClient) => {
 
 
 }
+
+
+
+const getPlayers = (teamId, redisClient) => new Promise((resolve, reject) => {
+  console.log("in players")
+  redisClient.keysAsync(`team${teamId}::player*`)
+    .catch(err => { console.log("Error : ", err) })
+    .then(res => {
+      return Promise.all(res.map(i => redisClient.hgetallAsync(i)))
+        .then((mres) => {
+            resolve (mres);
+            console.log(mres)
+        })
+        .catch((err) => {
+          console.log(err)
+          reject (err)
+        })
+
+    })
+})
+
 
 module.exports = initialize;
