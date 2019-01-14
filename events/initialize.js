@@ -6,7 +6,7 @@ const initialize = (socket, redisClient) => {
     team1: {},
     team2: {}
   }
-  let heading;
+
   redisClient.getAsync("current::inning")
     .then((resInning) => {
       scoreCardDisplay.inningId = parseInt(resInning);
@@ -27,6 +27,7 @@ const initialize = (socket, redisClient) => {
           getPlayers(1, redisClient),
           getPlayers(2, redisClient),
           redisClient.lrangeAsync("current::over1", 0, -1),
+          redisClient.smembersAsync(`team${teamId}::playedBatsman`),
           ]
           Promise.all(funArr)
             .then((res) => {
@@ -42,11 +43,28 @@ const initialize = (socket, redisClient) => {
                 runs: res[7],
                 wickets: res[8]
               }
+              let playerArr = []
+              Promise.all(res[13].map(i => redisClient.hgetallAsync(`team${battingTeam}::player${i}`)))
+                .then((res) => {
+                  res.map(key => {
+                    playerArr.push({
+                      name: key.name,
+                      runs: parseInt(key.runScored),
+                      balls: parseInt(key.ballsFaced),
+                      fours: parseInt(key.fours),
+                      sixes: parseInt(key.sixes)
+                    })
+                  })
+                })
+                .catch((err) => { console.log(err) })
+
+              let strikerId = res[2];
+              let nonStrikerId = res[3];
+              let bowlerId = res[4];
               scoreCardDisplay.team1.players = res[11];
               scoreCardDisplay.team2.players = res[12];
               scoreCardDisplay.overArray = res[13]
               scoreCardDisplay.matchStatus = 1;
-              console.log(res[10],"status======")
               if (res[9])
                 scoreCardDisplay.matchStatus = parseInt(res[9]);
               if (teamId == 1) {
@@ -74,65 +92,26 @@ const initialize = (socket, redisClient) => {
                 }
               }
 
-              let strikerId = res[2];
-              let nonStrikerId = res[3];
-              let bowlerId = res[4];
               let playerFunc = [redisClient.hgetallAsync(`team${battingTeam}::player${strikerId}`),
               redisClient.hgetallAsync(`team${battingTeam}::player${nonStrikerId}`),
               redisClient.hgetallAsync(`team${battingTeam}::player${bowlerId}`),
-              redisClient.smembersAsync(`team${teamId}::playedBatsman`),
               ]
 
-              Promise.all(playerFunc)
+              Promise.all(playerFunc)        //get Striker NonStriker and Bowler Details
                 .then((resPlayer) => {
                   if (resPlayer[0]) {
-                    scoreCardDisplay.striker = {
-                      id: parseInt(strikerId),
-                      name: resPlayer[0].name,
-                      runs: parseInt(resPlayer[0].runScored),
-                      balls: parseInt(resPlayer[0].ballsFaced),
-                      fours: parseInt(resPlayer[0].fours),
-                      sixes: parseInt(resPlayer[0].sixes)
-                    }
+                    scoreCardDisplay.striker = getPlayerDetails(strikerId, resPlayer[0])
                   }
                   if (resPlayer[1]) {
-                    scoreCardDisplay.nonStriker = {
-                      id: parseInt(nonStrikerId),
-                      name: resPlayer[1].name,
-                      runs: parseInt(resPlayer[1].runScored),
-                      balls: parseInt(resPlayer[1].ballsFaced),
-                      fours: parseInt(resPlayer[1].fours),
-                      sixes: parseInt(resPlayer[1].sixes)
-                    }
+                    scoreCardDisplay.nonStriker = getPlayerDetails(nonStrikerId, resPlayer[1])
                   }
                   if (resPlayer[2]) {
-                    scoreCardDisplay.bowler = {
-                      name: resPlayer[2].name,
-                      runsGiven: parseInt(resPlayer[2].runsGiven),
-                      ballsBowled: parseInt(resPlayer[2].overs),
-                      maiden: parseInt(resPlayer[2].maiden),
-                      wickets: parseInt(resPlayer[2].wickets),
-                    }
+                    scoreCardDisplay.bowler = getPlayerDetails(bowlerId, resPlayer[2])
                   }
-                  let batsmanBoard = {}
-                  let playerArr = []
-                  Promise.all(resPlayer[3].map(i => redisClient.hgetallAsync(`team${battingTeam}::player${i}`)))
-                    .then((res) => {
-                      res.map(key => {
-                        playerArr.push({
-                          name: key.name,
-                          runs: parseInt(key.runScored),
-                          balls: parseInt(key.ballsFaced),
-                          fours: parseInt(key.fours),
-                          sixes: parseInt(key.sixes)
-                        })
-                      })
-                      scoreCardDisplay.batsmanBoard = playerArr;
-                      console.log("scorecard...", scoreCardDisplay)
-                      socket.emit('initialize', scoreCardDisplay);
-                      socket.emit("initialize", scoreCardDisplay);
-                    })
-                    .catch(err => { console.log(err) })
+                  scoreCardDisplay.batsmanBoard = playerArr;
+                  console.log("scorecard...", scoreCardDisplay)
+                  socket.emit('initialize', scoreCardDisplay);
+                  socket.emit("initialize", scoreCardDisplay);
                 })
                 .catch((err) => { console.log(err) })
             })
@@ -149,7 +128,6 @@ const getPlayers = (teamId, redisClient) => new Promise((resolve, reject) => {
       return Promise.all(res.map(i => redisClient.hgetallAsync(i)))
         .then((mres) => {
           resolve(mres);
-         
         })
         .catch((err) => {
           console.log(err)
@@ -158,4 +136,20 @@ const getPlayers = (teamId, redisClient) => new Promise((resolve, reject) => {
 
     })
 })
+
+const getPlayerDetails = (data, id) => {
+  let result = {
+    id: parseInt(id),
+    name: data.name,
+    runsGiven: parseInt(data.runsGiven),
+    ballsBowled: parseInt(data.overs),
+    maiden: parseInt(data.maiden),
+    wickets: parseInt(data.wickets),
+    runs: parseInt(data.runScored),
+    balls: parseInt(data.ballsFaced),
+    fours: parseInt(data.fours),
+    sixes: parseInt(data.sixes)
+  }
+  return result;
+}
 module.exports = initialize;
