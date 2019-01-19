@@ -78,14 +78,25 @@ router.post("/apis/toss", (req, reply) => {
 
 //TODO
 router.post("/apis/test", async (req, reply) => {
+  let type = req.body.type;
   let key = req.body.key;
-  global.db.redis.hgetallAsync(key)
+  if (type == "keys")
+    global.db.redis.keysAsync("*")
+      .then(function (res) {
+        console.log({ response: res })
+        reply.send({ response: res }).status(200);
+      }).catch(function (err) {
+        console.log("Error : ", err)
+      })
+  else {
+    global.db.redis.hgetallAsync(key)
     .then(function (res) {
       console.log({ response: res })
       reply.send({ response: res }).status(200);
     }).catch(function (err) {
       console.log("Error : ", err)
     })
+  }
   // global.db.redis.lrangeAsync(["current::over",0,-1])
   //   .then(function (res) {
   //     console.log({ response: JSON.parse(res) })
@@ -95,5 +106,8 @@ router.post("/apis/test", async (req, reply) => {
   //   })
 
 })
+
+
+
 
 module.exports = router;
