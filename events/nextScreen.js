@@ -6,7 +6,7 @@ const nextScreen = (socket, redisClient) => {
         console.log("nextStatus", status)
         redisClient.setAsync('match::status', status)
         .catch((err) => console.log(err))
-        userSocket.emit("nextScreen",parseInt(status))
+        socket.emit("nextScreen",parseInt(status))
         // if (status == 2) {
         //     Promise.all([`team1::name`, `team2::name`])
         //         .then(res => {
