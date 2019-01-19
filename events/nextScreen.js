@@ -3,10 +3,10 @@ const initializeEvent = require(`./initialize`)
 const nextScreen = (socket, redisClient) => {
     //for front end to decide which screen to display
     socket.on('nextScreen', status => {
-        console.log("nextStstus", status)
+        console.log("nextStatus", status)
         redisClient.setAsync('match::status', status)
         .catch((err) => console.log(err))
-        userSocket.emit(parseInt(status))
+        userSocket.emit("nextScreen",parseInt(status))
         // if (status == 2) {
         //     Promise.all([`team1::name`, `team2::name`])
         //         .then(res => {
