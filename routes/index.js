@@ -77,9 +77,9 @@ router.post("/apis/toss", (req, reply) => {
 
 
 //TODO
-router.get("/apis/test", async (req, reply) => {
-  let teamId = req.params.teamId;
-  global.db.redis.hgetallAsync("team1::player5")
+router.post("/apis/test", async (req, reply) => {
+  let key = req.body.key;
+  global.db.redis.hgetallAsync(key)
     .then(function (res) {
       console.log({ response: res })
       reply.send({ response: res }).status(200);
