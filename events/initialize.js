@@ -26,8 +26,9 @@ const initialize = (socket, redisClient) => {
           redisClient.getAsync('match::status'),
           getPlayers(1, redisClient),
           getPlayers(2, redisClient),
-          redisClient.lrangeAsync("current::over1", 0, -1),
+          redisClient.lrangeAsync("current::over", 0, -1),
           redisClient.smembersAsync(`team${teamId}::playedBatsman`),
+          redisClient.getAsync(`match::overs`)
           ]
           Promise.all(funArr)
             .then((res) => {
@@ -43,6 +44,7 @@ const initialize = (socket, redisClient) => {
                 runs: res[7],
                 wickets: res[8]
               }
+              scoreCardDisplay.totalOvers=res[14]
               let playerArr = []
               Promise.all(res[13].map(i => redisClient.hgetallAsync(`team${battingTeam}::player${i}`)))
                 .then((res) => {

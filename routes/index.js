@@ -5,7 +5,7 @@ const async = require("async")
 //creates team and players keys
 router.post("/apis/createteam", (req, reply) => {
   //set teamscore to 0
-  let { teamId, teamName, teamPlayers } = req.body;
+  let { teamId, teamName, teamPlayers, totalOvers } = req.body;
   let counter = 1;
   async.each(teamPlayers, (i, cb) => {
     //set players data in redis
@@ -25,7 +25,7 @@ router.post("/apis/createteam", (req, reply) => {
     //set teamName
     global.db.redis.setAsync(`team${teamId}::name`, teamName)
       .then((res) => {
-        console.log("Error : ", err)
+        return global.db.redis.setAsync(`match::overs`, totalOvers)
       })
       .catch((err) => {
         console.log({ response: "created team successsfully" })
@@ -88,14 +88,23 @@ router.post("/apis/test", async (req, reply) => {
       }).catch(function (err) {
         console.log("Error : ", err)
       })
+  else if (type == "team") {
+    global.db.redis.getAsync(key)
+      .then(function (res) {
+        console.log({ response: res })
+        reply.send({ response: res }).status(200);
+      }).catch(function (err) {
+        console.log("Error : ", err)
+      })
+  }
   else {
     global.db.redis.hgetallAsync(key)
-    .then(function (res) {
-      console.log({ response: res })
-      reply.send({ response: res }).status(200);
-    }).catch(function (err) {
-      console.log("Error : ", err)
-    })
+      .then(function (res) {
+        console.log({ response: res })
+        reply.send({ response: res }).status(200);
+      }).catch(function (err) {
+        console.log("Error : ", err)
+      })
   }
   // global.db.redis.lrangeAsync(["current::over",0,-1])
   //   .then(function (res) {
