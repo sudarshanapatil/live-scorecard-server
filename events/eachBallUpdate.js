@@ -7,10 +7,15 @@ const eachBallUpdate = (socket, redisClient) => {
     socket.on("eachBallUpdate", data => {
         console.log(data, "eachballupdate")
         //send data to UserBoard
-        global.userSocket.emit(`eachBallUpdate`, data)
+        try {
+            global.userSocket.emit(`eachBallUpdate`, data)
+        }
+        catch (e) {
+            console.log(e)
+        }
         //playerId is who played the last ball
         //strikerId is now who is on strike
-        let { runScored, teamId, playerId, strikerId, bowlerId ,nonStrikerId} = data;
+        let { runScored, teamId, playerId, strikerId, bowlerId, nonStrikerId } = data;
 
         //increase runs of player and balls faced
         redisClient.hgetallAsync(`team${teamId}::player${playerId}`)

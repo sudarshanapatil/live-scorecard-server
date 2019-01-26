@@ -3,7 +3,12 @@ const extra = (socket, redisClient) => {
     socket.on("extra", data => {
         let { score, teamId, type } = data;
         //send data to UserBoard
-        global.userSocket.emit(`extra`, data)
+        try {
+            global.userSocket.emit(`extra`, data)
+        }
+        catch (e) {
+            console.log(e)
+        }
 
         redisClient.incrbyAsync(`team${teamId}::extra`, score + 1)
             .catch((err) => { console.log("err: ", err) })

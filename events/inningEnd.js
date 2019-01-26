@@ -4,8 +4,9 @@ const inningEnd = (socket, redisClient) => {
         //At end of every inning update the total score of team and make all current keys null
         console.log("inning end")
         //send data to UserBoard
-        global.userSocket.emit(`inningEnd`, data)
-        
+        try { global.userSocket.emit(`inningEnd`, data) }
+        catch (e) { console.log(e) }
+
         let { teamId, totalScore, totalWicket } = data;
         console.log('Status : ', status);
         redisClient.setAsync(`team${teamId}::score`, totalScore)

@@ -8,7 +8,12 @@ const wicket = (socket, redisClient) => {
         let oppositeTeamId = 1;
         if (teamId == 1)
             oppositeTeamId = 2;
-        global.userSocket.emit("wicket", data)
+        try {
+            global.userSocket.emit("wicket", data)
+        }
+        catch (e) {
+            console.log(e)
+        }
         //update total wickets by bowler and runs given
         redisClient.hgetallAsync(`team${oppositeTeamId}::player${bowlerId}`)
             .then(function (res) {

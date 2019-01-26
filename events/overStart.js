@@ -15,17 +15,22 @@ const overStart = (socket, redisClient) => {
         redisClient.getAsync(`team${teamId}::score`),
         ])
             .then((res) => {
-                global.userSocket.emit(`overStart`, {
-                    bowler: {
-                        name: res[0].name,
-                        runsGiven: res[0].runsGiven,
-                        ballsBowled: res[0].overs,
-                        maiden: res[0].maiden,
-                        wickets: res[0].wickets
-                    },
-                    strikerId: res[1],
-                    runs: res[2]
-                })
+                try {
+                    global.userSocket.emit(`overStart`, {
+                        bowler: {
+                            name: res[0].name,
+                            runsGiven: res[0].runsGiven,
+                            ballsBowled: res[0].overs,
+                            maiden: res[0].maiden,
+                            wickets: res[0].wickets
+                        },
+                        strikerId: res[1],
+                        runs: res[2]
+                    })
+                }
+                catch (e) {
+                    console.log(e)
+                }
             })
         //check maiden over
         redisClient.lrangeAsync('current::over', 0, -1)
@@ -35,22 +40,23 @@ const overStart = (socket, redisClient) => {
                 })
 
                 //Increament maidenCount for bowler
-                if (isMaiden) {
-                    redisClient.getAsync(`current::bowler`)
-                        .then((oldBowlerId) => {
-                            return redisClient.hgetallAsync(`team${oppositeTeamId}::player${oldBowlerId}`)
-                        })
-                        .then(function (res) {
-                            console.log("res: ", res)
-                            res.maidenOvers++;
-                            const funcArr = [
-                                redisClient.hmsetAsync(`team${oppositeTeamId}::player${oldBowlerId}`, res),
-                                redisClient.setAsync('current::bowler', bowlerId)
-                            ]
-                            return Promise.all(funcArr)
-                        })
-                        .catch((err) => { console.log("err: ", err) })
-                }
+                if (overId != 0)
+                    if (isMaiden) {
+                        redisClient.getAsync(`current::bowler`)
+                            .then((oldBowlerId) => {
+                                return redisClient.hgetallAsync(`team${oppositeTeamId}::player${oldBowlerId}`)
+                            })
+                            .then(function (res) {
+                                console.log("res: ", res)
+                                res.maidenOvers++;
+                                const funcArr = [
+                                    redisClient.hmsetAsync(`team${oppositeTeamId}::player${oldBowlerId}`, res),
+                                    redisClient.setAsync('current::bowler', bowlerId)
+                                ]
+                                return Promise.all(funcArr)
+                            })
+                            .catch((err) => { console.log("err: ", err) })
+                    }
             })
             .catch((err) => { console.log("err: ", err) })
 
