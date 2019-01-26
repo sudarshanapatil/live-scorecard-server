@@ -5,8 +5,9 @@ const async = require("async")
 //creates team and players keys
 router.post("/apis/createteam", (req, reply) => {
   //set teamscore to 0
-  let { teamId, teamName, teamPlayers, totalOvers } = req.body;
+  let { teamId, teamName, teamPlayers, totalOvers ,teamLogo} = req.body;
   let counter = 1;
+  console.log(req.body,"API data")
   async.each(teamPlayers, (i, cb) => {
     //set players data in redis
     let key = `team${teamId}::player${counter++}`;
@@ -23,13 +24,17 @@ router.post("/apis/createteam", (req, reply) => {
       })
   }, (done) => {
     //set teamName
-    global.db.redis.setAsync(`team${teamId}::name`, teamName)
+    console.log(teamName,"========teamname")
+    global.db.redis.hmsetAsync(`team${teamId}::info`, {teamName,teamLogo})
       .then((res) => {
         return global.db.redis.setAsync(`match::overs`, totalOvers)
       })
-      .catch((err) => {
+      .then((res) =>{
         console.log({ response: "created team successsfully" })
         reply.send({ response: "created team successsfully" }).status(200);
+      })
+      .catch((err) => {
+       console.log("error is : ",err)
       })
   })
 });
@@ -80,6 +85,7 @@ router.post("/apis/toss", (req, reply) => {
 router.post("/apis/test", async (req, reply) => {
   let type = req.body.type;
   let key = req.body.key;
+  console.log("key is : ",key)
   if (type == "keys")
     global.db.redis.keysAsync("*")
       .then(function (res) {
@@ -89,7 +95,16 @@ router.post("/apis/test", async (req, reply) => {
         console.log("Error : ", err)
       })
   else if (type == "team") {
-    global.db.redis.getAsync(key)
+    global.db.redis.hgetallAsync(key)
+      .then(function (res) {
+        console.log({ response: res })
+        reply.send({ response: res }).status(200);
+      }).catch(function (err) {
+        console.log("Error : ", err)
+      })
+  }
+  else if (type == "status") {
+    global.db.redis.getAsync("match::status")
       .then(function (res) {
         console.log({ response: res })
         reply.send({ response: res }).status(200);

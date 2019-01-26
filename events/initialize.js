@@ -14,8 +14,8 @@ const initialize = (socket, redisClient) => {
         .then((resToss) => {
           let { battingTeam, teamId, decision } = resToss;
           scoreCardDisplay.toss = { teamId: teamId, decision: decision, battingTeam: battingTeam }
-          let funArr = [redisClient.getAsync(`team1::name`),
-          redisClient.getAsync(`team2::name`),
+          let funArr = [redisClient.hgetallAsync(`team1::info`),
+          redisClient.hgetallAsync(`team2::info`),
           redisClient.getAsync(`current::striker`),
           redisClient.getAsync(`current::nonStriker`),
           redisClient.getAsync(`current::bowler`),
@@ -32,15 +32,16 @@ const initialize = (socket, redisClient) => {
           ]
           Promise.all(funArr)
             .then((res) => {
+              console.log("teaminfo: ",res[0],res[1])
               scoreCardDisplay.team1 = {
-                name: res[0].name,
-                logo: res[0].logo,
+                name: res[0].teamName,
+                logo: res[0].teamLogo,
                 runs: res[5],
                 wickets: res[6]
               }
               scoreCardDisplay.team2 = {
-                name: res[1].name,
-                logo: res[1].logo,
+                name: res[1].teamName,
+                logo: res[1].teamLogo,
                 runs: res[7],
                 wickets: res[8]
               }

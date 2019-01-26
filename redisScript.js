@@ -20,6 +20,8 @@ redisClient.on('connect', err => {
 const setKey = () => {
     redisClient.setAsync("match::status", 1)
         .then(res => console.log(res))
+    // redisClient.setAsync("team1::name", "ranuuu")
+    //     .then(res => console.log(res))
 }
 
 const getAllKeys= (key) => {
