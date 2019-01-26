@@ -4,15 +4,13 @@ const inningStart = (socket, redisClient) => {
     socket.on('inningStart', data => {
         console.log("match started", data)
         //send data to UserBoard
-        try{
-        global.userSocket.emit(`inningStart`, data)
+        try {  //added try catch if user is not connected
+            global.userSocket.emit(`inningStart`, data)
         }
-        catch(e)
-        {
+        catch (e) {
             console.log(e)
         }
         let { strikerId, nonStrikerId, teamId, inningId } = data;
-        let heading = {};
         let funcArr = [redisClient.setAsync('current::striker', strikerId),
         redisClient.setAsync('current::nonStriker', nonStrikerId),
         redisClient.setAsync(`team${teamId}::totalballs`, 0),
