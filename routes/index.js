@@ -9,7 +9,10 @@ router.post("/apis/createteam", (req, reply) => {
   console.log( "API data : ",req.body)
   let funcArr = [];
   funcArr = teamPlayers.map((key) => global.db.redis.hmsetAsync(`team${teamId}::player${counter++}`, key))
-  funcArr.push(global.db.redis.hmsetAsync(`team${teamId}::info`, { teamName, teamLogo }), global.db.redis.setAsync(`match::overs`, totalOvers))
+  funcArr.push(global.db.redis.hmsetAsync(`team${teamId}::info`, { teamName, teamLogo }), 
+  global.db.redis.setAsync(`match::overs`, totalOvers),
+  global.db.redis.setAsync(`team${teamId}::wickets`, 0)
+  )
   Promise.all(funcArr)
     .then((res) => {
       reply.send({ response: "created team successsfully", code: 200 }).status(200);

@@ -20,9 +20,9 @@ const initialize = (socket, redisClient) => {
           redisClient.getAsync(`current::nonStriker`),
           redisClient.getAsync(`current::bowler`),
           redisClient.getAsync(`team1::score`),
-          redisClient.getAsync(`team1::wicket`),
+          redisClient.getAsync(`team1::wickets`),
           redisClient.getAsync(`team2::score`),
-          redisClient.getAsync(`team2::wicket`),
+          redisClient.getAsync(`team2::wickets`),
           redisClient.getAsync('match::status'),
           getPlayers(1, redisClient),
           getPlayers(2, redisClient),
@@ -36,14 +36,14 @@ const initialize = (socket, redisClient) => {
               scoreCardDisplay.team1 = {
                 name: res[0].teamName,
                 logo: res[0].teamLogo,
-                runs: res[5],
-                wickets: res[6]
+                runs: parseInt(res[5]),
+                wickets: parseInt(res[6])
               }
               scoreCardDisplay.team2 = {
                 name: res[1].teamName,
                 logo: res[1].teamLogo,
-                runs: res[7],
-                wickets: res[8]
+                runs: parseInt(res[7]),
+                wickets: parseInt(res[8])
               }
               scoreCardDisplay.totalOvers=res[14]
               let playerArr = []

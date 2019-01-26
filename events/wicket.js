@@ -27,7 +27,7 @@ const wicket = (socket, redisClient) => {
             .catch((err) => { console.log("err: ", err) })
         //update run given
         const funcArr = [redisClient.hgetallAsync(`team${teamId}::player${playerId}`),//store the info how the batsman is out and score
-        redisClient.incrbyAsync(`team${teamId}::wicket`, 1), //wicket list update
+        redisClient.incrbyAsync(`team${teamId}::wickets`, 1), //wicket list update
         redisClient.saddAsync(`team${teamId}::playedBatsman`, playerId), //stores list of batsman played till now
         redisClient.rpushAsync('current::over', "W"), //update over array
         redisClient.setAsync(`current::striker`, strikerId),//set new batsman
